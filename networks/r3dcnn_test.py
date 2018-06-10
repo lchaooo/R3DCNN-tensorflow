@@ -7,7 +7,7 @@ from model import Model
 MOVING_AVERAGE_DECAY = 0.9999
 NUM_LABELS = 26
 
-class R3DCNN(Model):
+class R3DCNNTEST(Model):
     def __init__(self, options):
         """Initialize model.
 
@@ -46,27 +46,25 @@ class R3DCNN(Model):
         tower_grads1 = []
 	    tower_grads2 = []
 
-	    learning_rate = tf.train.exponential_decay(1e-3, global_step, 10500, 0.3)
-        #opt = tf.train.AdamOptimizer(learning_rate)
-	    opt1 = tf.train.AdamOptimizer(1e-4)
-        opt2 = tf.train.AdamOptimizer(3e-4)	
+	    #opt1 = tf.train.AdamOptimizer(1e-4)
+        #opt2 = tf.train.AdamOptimizer(3e-4)	
 
         with tf.variable_scope('var_name') as var_scope:
             for gpu_index in range(0, options.gpus):
                 with tf.device('/gpu:%d' % gpu_index):
                     with tf.name_scope('%s_%d' % ('gestabase', gpu_index)) as scope:
                         weights = {
-                            'wc1': self._variable_with_weight_decay('wc1', [3, 3, 3, 3, 64], 0.0005),
-                            'wc2': self._variable_with_weight_decay('wc2', [3, 3, 3, 64, 128], 0.0005),
-                            'wc3a': self._variable_with_weight_decay('wc3a', [3, 3, 3, 128, 256], 0.0005),
-                            'wc3b': self._variable_with_weight_decay('wc3b', [3, 3, 3, 256, 256], 0.0005),
-                            'wc4a': self._variable_with_weight_decay('wc4a', [3, 3, 3, 256, 512], 0.0005),
-                            'wc4b': self._variable_with_weight_decay('wc4b', [3, 3, 3, 512, 512], 0.0005),
-                            'wc5a': self._variable_with_weight_decay('wc5a', [3, 3, 3, 512, 512], 0.0005),
-                            'wc5b': self._variable_with_weight_decay('wc5b', [3, 3, 3, 512, 512], 0.0005),
+                            'wc1': self._variable_with_weight_decay('wc1', [3, 3, 3, 3, 64], 0.0000),
+                            'wc2': self._variable_with_weight_decay('wc2', [3, 3, 3, 64, 128], 0.0000),
+                            'wc3a': self._variable_with_weight_decay('wc3a', [3, 3, 3, 128, 256], 0.0000),
+                            'wc3b': self._variable_with_weight_decay('wc3b', [3, 3, 3, 256, 256], 0.0000),
+                            'wc4a': self._variable_with_weight_decay('wc4a', [3, 3, 3, 256, 512], 0.0000),
+                            'wc4b': self._variable_with_weight_decay('wc4b', [3, 3, 3, 512, 512], 0.0000),
+                            'wc5a': self._variable_with_weight_decay('wc5a', [3, 3, 3, 512, 512], 0.0000),
+                            'wc5b': self._variable_with_weight_decay('wc5b', [3, 3, 3, 512, 512], 0.0000),
                             # changed
-                            'wd1': self._variable_with_weight_decay('wd1', [8192, 4096], 0.0005),
-                            'wd2': self._variable_with_weight_decay('wd2', [4096, 4096], 0.0005),
+                            'wd1': self._variable_with_weight_decay('wd1', [8192, 4096], 0.0001),
+                            'wd2': self._variable_with_weight_decay('wd2', [4096, 4096], 0.0002),
                             'out': self._variable_with_weight_decay('wout', [options.hidden_cells, NUM_LABELS], 0.0005)
                         }
                         biases = {
@@ -118,13 +116,13 @@ class R3DCNN(Model):
                     about the dimensions of the sparse tensor. Because in case
                     of batch processing, it might happen that one is padded
                     """
-                    seq_len = np.ones(options.batch_size) * 10 
+                    seq_len = np.ones(options.batch_size) * 2
 
                     loss = self.tower_loss(scope, logit, labels_placeholder, seq_len)
-		            grads1 = opt1.compute_gradients(loss, varlist1)
-                    grads2 = opt2.compute_gradients(loss, varlist2)
-		            tower_grads1.append(grads1)
-                    tower_grads2.append(grads2)
+		            #grads1 = opt1.compute_gradients(loss, varlist1)
+                    #grads2 = opt2.compute_gradients(loss, varlist2)
+		            #tower_grads1.append(grads1)
+                    #tower_grads2.append(grads2)
                     logits.append(logit)
                     tf.get_variable_scope().reuse_variables()
         logits = tf.concat(logits, 0)
@@ -132,21 +130,21 @@ class R3DCNN(Model):
         # NOTE: this has to be fixed when using multiple gpus?
         self._norm_score = tf.nn.softmax(logits)
 
-        grads1 = self.average_gradients(tower_grads1)
-        grads2 = self.average_gradients(tower_grads2)
-        apply_gradient_op1 = opt1.apply_gradients(grads1, global_step = global_step)
-        apply_gradient_op2 = opt2.apply_gradients(grads2, global_step=global_step)
-        variable_averages = tf.train.ExponentialMovingAverage(MOVING_AVERAGE_DECAY)
-        variables_averages_op = variable_averages.apply(tf.trainable_variables())
-	    train_op = tf.group(apply_gradient_op1, apply_gradient_op2, variables_averages_op)
-        null_op = tf.no_op()
+        #grads1 = self.average_gradients(tower_grads1)
+        #grads2 = self.average_gradients(tower_grads2)
+        #apply_gradient_op1 = opt1.apply_gradients(grads1, global_step = global_step)
+        #apply_gradient_op2 = opt2.apply_gradients(grads2, global_step=global_step)
+        #variable_averages = tf.train.ExponentialMovingAverage(MOVING_AVERAGE_DECAY)
+        #variables_averages_op = variable_averages.apply(tf.trainable_variables())
+	    #train_op = tf.group(apply_gradient_op1, apply_gradient_op2, variables_averages_op)
+        #null_op = tf.no_op()
         self._decoded, _ = tf.nn.ctc_greedy_decoder(logits, seq_len, merge_repeated=True)
 
         # greedy decode only returns one possibility. get it through 0
         self._ler = tf.reduce_mean(tf.edit_distance(tf.cast(self.decoded[0], tf.int32), labels_placeholder))
 
         self._summary = tf.summary.merge_all()
-        self._train_op = train_op
+        #self._train_op = train_op
         self._loss = loss
 
 
@@ -192,17 +190,3 @@ class R3DCNN(Model):
         # print(labels_placeholder.get_shape())
         return images_placeholder, labels_placeholder
 
-    def restore_3DN(self, location, sess):
-        """Restore 3DN part of R3DCNN model."""
-        variables = list()
-        for key, value in self.biases.items():
-            if(key == 'out'):
-                print("Skipped out layer")
-                continue
-            variables.append(value)
-        for key, value in self.weights.items():
-            if(key == 'out'):
-                print("Skipped out layer")
-                continue
-            variables.append(value)
-        self.restore(location, sess, variables)

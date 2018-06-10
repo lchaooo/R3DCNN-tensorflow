@@ -22,14 +22,13 @@ forward to make predictions.
 
 import tensorflow as tf
 
-NUM_CLASSES = 4
 
 # Images are cropped to (CROP_SIZE, CROP_SIZE)
-CROP_SIZE = 120
-CHANNELS = 1
+#CROP_SIZE = 112
+#CHANNELS = 3
 
 # Number of frames per video clip
-NUM_FRAMES_PER_CLIP = 16
+#NUM_FRAMES_PER_CLIP = 16
 
 "-----------------------------------------------------------------------------------------------------------------------"
 
@@ -40,10 +39,8 @@ def conv3d(name, l_input, w, b):
         b
     )
 
-
 def max_pool(name, l_input, k):
     return tf.nn.max_pool3d(l_input, ksize=[1, k, 2, 2, 1], strides=[1, k, 2, 2, 1], padding='SAME', name=name)
-
 
 def inference_c3d(_X, _dropout, batch_size, _weights, _biases):
 
@@ -79,16 +76,15 @@ def inference_c3d(_X, _dropout, batch_size, _weights, _biases):
     pool5 = max_pool('pool5', conv5, k=2)
 
     # Fully connected layer
-    pool5 = tf.transpose(pool5, perm=[0, 1, 4, 2, 3])
-    dense1 = tf.reshape(pool5, [batch_size, _weights['wd1'].get_shape().as_list()[
-                        0]])  # Reshape conv3 output to fit dense layer input
+    # pool5 = tf.transpose(pool5, perm=[0, 1, 4, 2, 3])
+    # print(_weights['wd1'].get_shape().as_list())
+    dense1 = tf.reshape(pool5, [batch_size, _weights['wd1'].get_shape().as_list()[0]])  # Reshape conv3 output to fit dense layer input
     dense1 = tf.matmul(dense1, _weights['wd1']) + _biases['bd1']
 
     dense1 = tf.nn.relu(dense1, name='fc1')  # Relu activation
     dense1 = tf.nn.dropout(dense1, _dropout)
 
-    dense2 = tf.nn.relu(tf.matmul(
-        dense1, _weights['wd2']) + _biases['bd2'], name='fc2')  # Relu activation
+    dense2 = tf.nn.relu(tf.matmul(dense1, _weights['wd2']) + _biases['bd2'], name='fc2')  # Relu activation
     dense2 = tf.nn.dropout(dense2, _dropout)
 
     # Output: class prediction

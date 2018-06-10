@@ -21,6 +21,7 @@ forward to make predictions.
 """
 
 import tensorflow as tf
+import numpy as np
 
 "-----------------------------------------------------------------------------"
 
@@ -75,10 +76,10 @@ def inference_r3dcnn(_X, _dropout, batch_size, num_clips, hidden_cells, init_sta
     pool5 = max_pool('pool5', conv5, k=2)
 
     # Fully connected layer
-    pool5 = tf.transpose(pool5, perm=[0, 1, 4, 2, 3])
+    # pool5 = tf.transpose(pool5, perm=[0, 1, 4, 2, 3])
     # Reshape conv3 output to fit dense layer inputs
-    dense1 = tf.reshape(pool5, [batch_size*num_clips,
-                                _weights['wd1'].get_shape().as_list()[0]])
+    dense1 = tf.reshape(pool5, [batch_size * 10, _weights['wd1'].get_shape().as_list()[
+                        0]])  # Reshape conv3 output to fit dense layer input
     dense1 = tf.matmul(dense1, _weights['wd1']) + _biases['bd1']
 
     dense1 = tf.nn.relu(dense1, name='fc1')  # Relu activation
@@ -121,8 +122,7 @@ def inference_r3dcnn(_X, _dropout, batch_size, num_clips, hidden_cells, init_sta
     lstm_cell = tf.nn.rnn_cell.LSTMCell(hidden_cells, state_is_tuple=True)
 
     # if is_training and config.keep_prob < 1:
-    lstm_cell = tf.nn.rnn_cell.DropoutWrapper(
-        lstm_cell, output_keep_prob=_dropout)
+    #lstm_cell = tf.nn.rnn_cell.DropoutWrapper(lstm_cell, output_keep_prob=_dropout)
     LAYERS = 1
     # Stacking rnn cells
     stack = tf.nn.rnn_cell.MultiRNNCell([lstm_cell] * LAYERS,
@@ -132,7 +132,7 @@ def inference_r3dcnn(_X, _dropout, batch_size, num_clips, hidden_cells, init_sta
     outputs, final_state = tf.nn.dynamic_rnn(stack, dense2,
                                              dtype=tf.float32,
                                              time_major=True,
-                                             initial_state=init_state)
+                                             )
     # this has to be set for live training
 
 

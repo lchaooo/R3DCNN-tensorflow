@@ -105,11 +105,11 @@ class Model(object):
         saver = tf.train.Saver(variables)
         if os.path.isfile(location + '.index'):
             saver.restore(sess, location)
-            print("\n\n\n", file=sys.stderr)
-            print("Restored %s" % location, file=sys.stderr)
+            # print("\n\n\n", file=sys.stderr)
+            # print("Restored %s" % location, file=sys.stderr)
         else:
-            print("Restore Model %s could not be found. Exiting"
-                  % location, file=sys.stderr)
+            # print("Restore Model %s could not be found. Exiting"
+            #       % location, file=sys.stderr)
             sys.exit()
         # get last thre parts and substitute
         self._name = "_".join(location.split("/")[-3:])
@@ -121,7 +121,7 @@ class Model(object):
             for g, _ in grad_and_vars:
                 expanded_g = tf.expand_dims(g, 0)
                 grads.append(expanded_g)
-            grad = tf.concat(0, grads)
+            grad = tf.concat(grads, 0)
             grad = tf.reduce_mean(grad, 0)
             v = grad_and_vars[0][1]
             grad_and_var = (grad, v)
@@ -139,9 +139,9 @@ class Model(object):
         return var
 
     def _variable_with_weight_decay(self, name, shape, wd):
-        var = self._variable_on_cpu(name, shape, tf.contrib.layers.xavier_initializer())
+        var = self._variable_on_cpu(name, shape, tf.truncated_normal_initializer(mean=0.0,stddev=0.01))
         if wd is not None:
-            weight_decay = tf.mul(tf.nn.l2_loss(var), wd, name='weight_loss')
+            weight_decay = tf.multiply(tf.nn.l2_loss(var), wd, name='weight_loss')
             tf.add_to_collection('losses', weight_decay)
         return var
 
